@@ -182,7 +182,7 @@ function App() {
   return (
     <>
       <GoharCRM />
-      <button style={loginStyles.logout} onClick={() => signOut(auth)}>
+      <button className="logout-btn" style={loginStyles.logout} onClick={() => signOut(auth)}>
         Sign out
       </button>
     </>

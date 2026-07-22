@@ -1,5 +1,7 @@
 ﻿import React, { useState, useEffect, useMemo } from "react";
 
+import goharLogo from "./GOHAR logo.png";
+
 /* ------------------------------------------------------------------ */
 /*  Gohar Traders (Embroidery Thread) — Shop CRM                        */
 /*  Green & white brand · white canvas · data saved automatically       */
@@ -122,20 +124,18 @@ export default function GoharCRM() {
       {/* -------- sidebar -------- */}
       <aside style={S.side}>
         <div style={S.brand}>
-          <div style={S.spool}>
-            <div style={S.spoolThread} />
-          </div>
-          <div>
-            <div style={S.brandName}>Gohar Traders</div>
-            <div style={S.brandSub}>Embroidery Thread</div>
-          </div>
+          <img
+            src={goharLogo}
+            alt="Gohar Traders — Embroidery Thread"
+            style={{ display: "block", width: "100%", maxWidth: 195, height: "auto" }}
+          />
         </div>
         <nav style={{ display: "grid", gap: 4 }}>
           {NAV.map(([k, label]) => (
             <button
               key={k}
               onClick={() => setPage(k)}
-              className="navbtn"
+              className={`navbtn${page === k ? " active" : ""}`}
               style={{
                 ...S.navBtn,
                 background: page === k ? T.white : "transparent",
@@ -602,4 +602,31 @@ function Hint({text}) { return <div style={{marginTop:8,fontSize:13,color:T.gree
 
 const S={app:{minHeight:"100vh",display:"flex",background:T.white,color:T.ink,fontFamily:"'Segoe UI', system-ui, sans-serif"},side:{width:230,minHeight:"100vh",background:`linear-gradient(180deg, ${T.green900}, ${T.green700})`,padding:"22px 14px",display:"flex",flexDirection:"column",gap:22,flexShrink:0,position:"sticky",top:0,alignSelf:"flex-start",height:"100vh",boxSizing:"border-box"},brand:{display:"flex",gap:10,alignItems:"center",padding:"0 6px"},spool:{width:38,height:38,borderRadius:8,background:T.white,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0},spoolThread:{width:22,height:22,borderRadius:"50%",border:`3px solid ${T.green600}`,borderTopColor:T.green900,borderRightColor:T.green500},brandName:{color:T.white,fontWeight:800,fontSize:16,lineHeight:1.1},brandSub:{color:"#A9D8BA",fontSize:11,letterSpacing:.5},navBtn:{textAlign:"left",padding:"10px 12px",border:"none",borderRadius:8,fontSize:14,cursor:"pointer"},stitch:{marginTop:"auto",borderTop:"2px dashed rgba(255,255,255,.35)"},main:{flex:1,padding:"26px 30px",maxWidth:1100,boxSizing:"border-box"},h1:{margin:0,fontSize:26,fontWeight:800,color:T.green900},headStitch:{marginTop:10,width:90,borderTop:`3px dashed ${T.green500}`},cards:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))",gap:12},stat:{background:T.mint,border:`1px solid ${T.mintLine}`,borderRadius:12,padding:"14px 16px"},card:{background:T.white,border:`1px solid ${T.mintLine}`,borderRadius:14,padding:18,boxShadow:"0 1px 3px rgba(15,61,38,.05)"},cardTitle:{fontWeight:700,color:T.green900,marginBottom:10,fontSize:15},formRow:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(150px, 1fr))",gap:10,alignItems:"end"},field:{display:"grid",gap:4},fieldLabel:{fontSize:12,color:T.sub,fontWeight:600},input:{padding:"9px 10px",borderRadius:8,border:`1px solid ${T.mintLine}`,fontSize:14,outlineColor:T.green500,background:T.white,width:"100%",boxSizing:"border-box"},btn:{padding:"10px 16px",borderRadius:8,border:"none",background:T.green700,color:T.white,fontWeight:700,fontSize:14,cursor:"pointer"},tab:{padding:"9px 16px",borderRadius:999,border:`1.5px solid ${T.green700}`,fontWeight:700,fontSize:13,cursor:"pointer"},tabSm:{padding:"7px 12px",borderRadius:999,border:`1px solid ${T.mintLine}`,fontSize:13,cursor:"pointer",color:T.green700,fontWeight:600},table:{width:"100%",borderCollapse:"collapse",fontSize:14},th:{textAlign:"left",padding:"9px 10px",background:T.mint,color:T.green900,fontSize:12,textTransform:"uppercase",letterSpacing:.5,borderBottom:`1px solid ${T.mintLine}`,whiteSpace:"nowrap"},td:{padding:"9px 10px",borderBottom:`1px solid ${T.mintLine}`},del:{border:"none",background:"transparent",color:T.red,fontSize:18,cursor:"pointer",lineHeight:1,padding:"0 6px"}};
 
-const CSS=`*{box-sizing:border-box}body{margin:0}.navbtn:hover{background:rgba(255,255,255,.12)!important}.trh:hover{background:${T.mint}}button:disabled{cursor:not-allowed}@media(max-width:700px){#gohar-app{display:block!important}#gohar-app aside{width:100%!important;height:auto!important;min-height:0!important;position:static!important}#gohar-app nav{grid-template-columns:repeat(2,1fr)}#gohar-app main{padding:18px 12px!important}}`;
+const CSS=`
+*{box-sizing:border-box}
+html,body,#root{margin:0;min-width:320px}
+#gohar-app main{min-width:0}
+.navbtn.active{background:${T.white}!important;color:${T.green700}!important}
+.trh:hover{background:${T.mint}}
+button:disabled{cursor:not-allowed}
+@media(hover:hover){.navbtn:not(.active):hover{background:rgba(255,255,255,.12)!important}}
+@media(max-width:700px){
+  #gohar-app{display:block!important;min-height:100vh!important}
+  #gohar-app aside{width:100%!important;height:auto!important;min-height:0!important;position:static!important;padding:14px 12px 12px!important;gap:12px!important}
+  #gohar-app aside>div:first-child{padding-right:82px!important}
+  #gohar-app aside nav{display:flex!important;gap:8px!important;overflow-x:auto!important;padding:2px 0 6px!important;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  #gohar-app aside nav .navbtn{flex:0 0 auto!important;min-width:max-content!important;padding:9px 13px!important;text-align:center!important;border:1px solid rgba(255,255,255,.16)!important}
+  #gohar-app aside>div:last-child{display:none!important}
+  #gohar-app main{width:100%!important;max-width:none!important;padding:18px 12px 28px!important;overflow:hidden!important}
+  #gohar-app h1{font-size:23px!important}
+  #gohar-app main>div{max-width:100%}
+  #gohar-app table{min-width:620px}
+  #gohar-app label{min-width:0}
+  #gohar-app input,#gohar-app select{font-size:16px!important}
+  .logout-btn{top:12px!important;right:10px!important;padding:7px 10px!important}
+}
+@media(max-width:420px){
+  #gohar-app main{padding-left:10px!important;padding-right:10px!important}
+  #gohar-app main>div{border-radius:11px}
+}
+`;
