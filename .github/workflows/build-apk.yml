@@ -21,33 +21,38 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Install Capacitor Dependencies
-        run: npm install --no-save @capacitor/core @capacitor/cli @capacitor/android
+      - name: Install Pinned Capacitor Dependencies
+        run: |
+          npm install --no-save \
+            @capacitor/core@7.6.4 \
+            @capacitor/cli@7.6.4 \
+            @capacitor/android@7.6.4
 
-      - name: Build Web Assets (if applicable)
-        run: npm run build --if-present
+      - name: Build Web Assets
+        run: npm run build
 
       - name: Create Capacitor Android Project
         run: |
-          if [ ! -d android ]; then
-            npx --no-install cap init "Gohar Traders" "com.gohartraders.app" --web-dir dist
-            npx --no-install cap add android
-          fi
+          npx --no-install cap init "Gohar Traders" "com.gohartraders.app" --web-dir dist
+          npx --no-install cap add android
 
       - name: Sync Capacitor
         run: npx --no-install cap sync android
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Build Debug APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
