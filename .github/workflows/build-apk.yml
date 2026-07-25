@@ -45,9 +45,6 @@ jobs:
       - name: Sync Capacitor
         run: npx --no-install cap sync android
 
-      - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
       - name: Build Debug APK
         run: |
           cd android
