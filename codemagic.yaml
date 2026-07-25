@@ -1,13 +1,60 @@
 workflows:
+  gohar-traders-android:
+    name: Gohar Traders Android APK
+    instance_type: linux_x2
+    max_build_duration: 60
+
+    environment:
+      groups:
+        - firebase_credentials
+      vars:
+        PACKAGE_NAME: "com.gohartraders.app"
+        APP_NAME: "Gohar Traders"
+      node: 22
+      java: 21
+
+    scripts:
+      - name: Install web and Capacitor dependencies
+        script: |
+          npm ci
+          npm install --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+
+      - name: Build the Vite web app
+        script: |
+          npm run build
+
+      - name: Generate the Capacitor Android project
+        script: |
+          rm -rf android
+          npx cap init "$APP_NAME" "$PACKAGE_NAME" --web-dir dist
+          npx cap add android
+          npx cap sync android
+
+      - name: Build installable APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
+      - android/app/build/reports/**
+
+    publishing:
+      email:
+        recipients:
+          - goharhumayun@gmail.com
+        notify:
+          success: true
+          failure: true
+
   gohar-traders-ios:
-    name: Gohar Traders iOS IPA
+    name: Gohar Traders iOS Simulator (Unsigned)
     instance_type: mac_mini_m2
     max_build_duration: 120
 
     environment:
       groups:
-        # Create these groups in Codemagic > Environment variables.
-        - appstore_credentials
         - firebase_credentials
       vars:
         BUNDLE_ID: "com.gohartraders.app"
@@ -35,34 +82,28 @@ workflows:
           npx cap add ios
           npx cap sync ios
 
-      - name: Fetch Apple signing files
-        script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-          keychain add-certificates
-
-      - name: Apply provisioning profiles
-        script: |
-          xcode-project use-profiles --project ios/App/App.xcodeproj
-
-      - name: Set app version and build number
+      - name: Build unsigned iOS Simulator app
         script: |
           cd ios/App
-          agvtool new-marketing-version "1.0"
-          agvtool new-version -all "$BUILD_NUMBER"
+          xcodebuild \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build/ios-simulator \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
 
-      - name: Build signed IPA
+      - name: Package Simulator app
         script: |
-          cd ios/App
-          xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME"
+          cd ios/App/build/ios-simulator/Build/Products/Debug-iphonesimulator
+          ditto -c -k --sequesterRsrc --keepParent App.app Gohar-Traders-iOS-Simulator.zip
 
     artifacts:
-      - ios/App/build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - ios/App/build/ios-simulator/Build/Products/Debug-iphonesimulator/Gohar-Traders-iOS-Simulator.zip
+      - ios/App/build/ios-simulator/Build/Products/Debug-iphonesimulator/App.app
+      - ios/App/build/ios-simulator/Build/Products/Debug-iphonesimulator/*.dSYM
 
     publishing:
       email:
