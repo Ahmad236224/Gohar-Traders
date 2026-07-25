@@ -36,6 +36,29 @@ const EMPTY = {
   accounts: [],  // {id,date,type:'in'|'out',desc,amount}
 };
 
+const DEFAULT_PRODUCTS = [
+  { name: "Viscose in cones", shade: "", unit: "cone", purchasePrice: "", salePrice: "" },
+  { name: "Polyester in cones", shade: "", unit: "cone", purchasePrice: "", salePrice: "" },
+  { name: "Tilla in cones", shade: "", unit: "cone", purchasePrice: "", salePrice: "" },
+  { name: "Colour bobin 1 kg", shade: "", unit: "kg", purchasePrice: "", salePrice: "" },
+  { name: "Colour bobin 700g", shade: "", unit: "kg", purchasePrice: "", salePrice: "" },
+  { name: "White bobin 1 kg", shade: "", unit: "kg", purchasePrice: "", salePrice: "" },
+  { name: "White bobin 2 kg", shade: "", unit: "kg", purchasePrice: "", salePrice: "" },
+];
+
+const addDefaultProducts = (database) => {
+  const existingNames = new Set(
+    (database.products || []).map((product) => product.name.trim().toLowerCase()),
+  );
+  const missing = DEFAULT_PRODUCTS
+    .filter((product) => !existingNames.has(product.name.toLowerCase()))
+    .map((product) => ({ id: uid(), ...product }));
+
+  return missing.length
+    ? { database: { ...database, products: [...missing, ...(database.products || [])] }, changed: true }
+    : { database, changed: false };
+};
+
 const KEY = "gohar-traders-crm";
 
 export default function GoharCRM() {
@@ -49,7 +72,10 @@ export default function GoharCRM() {
     (async () => {
       try {
         const r = await window.storage.get(KEY);
-        if (r && r.value) setDb({ ...EMPTY, ...JSON.parse(r.value) });
+        const stored = r && r.value ? JSON.parse(r.value) : EMPTY;
+        const seeded = addDefaultProducts({ ...EMPTY, ...stored });
+        setDb(seeded.database);
+        if (seeded.changed) await window.storage.set(KEY, JSON.stringify(seeded.database));
       } catch (e) {
         setStorageError("Cloud data could not be loaded. Check your connection and Firestore rules, then refresh.");
       }
@@ -268,7 +294,7 @@ function StockIn({ db, add, remove, productById, vendorById }) {
       <PageHead title="Stock In" sub="Purchases coming into the shop" />
       <div style={S.card}>
         <div style={S.cardTitle}>New stock entry</div>
-        <div style={S.formRow}>
+        <div className="stock-entry-form" style={S.formRow}>
           <Input label="Date" type="date" value={f.date} onChange={(v) => setF({ ...f, date: v })} />
           <Select label="Product" value={f.productId} onChange={pickProduct}
             options={db.products.map((p) => [p.id, `${p.name}${p.shade ? " · " + p.shade : ""}`])} placeholder="Select product" />
@@ -471,7 +497,7 @@ function StockOut({ db, add, remove, productById, partyById }) {
       <PageHead title="Stock Out" sub="Sales going out to parties" />
       <div style={S.card}>
         <div style={S.cardTitle}>New sale entry</div>
-        <div style={S.formRow}>
+        <div className="stock-entry-form" style={S.formRow}>
           <Input label="Date" type="date" value={f.date} onChange={(v) => setF({ ...f, date: v })} />
           <Select label="Product" value={f.productId} onChange={pickProduct}
             options={db.products.map((p) => [p.id, `${p.name}${p.shade ? " · " + p.shade : ""}`])} placeholder="Select product" />
@@ -622,7 +648,8 @@ button:disabled{cursor:not-allowed}
   #gohar-app main>div{max-width:100%}
   #gohar-app table{min-width:620px}
   #gohar-app label{min-width:0}
-  #gohar-app input,#gohar-app select{font-size:16px!important}
+  #gohar-app input,#gohar-app select{font-size:16px!important;min-width:0!important}
+  #gohar-app .stock-entry-form{grid-template-columns:minmax(0,1fr)!important}
   .logout-btn{top:12px!important;right:10px!important;padding:7px 10px!important}
 }
 @media(max-width:420px){
