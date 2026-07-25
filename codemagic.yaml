@@ -1,0 +1,73 @@
+workflows:
+  gohar-traders-ios:
+    name: Gohar Traders iOS IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    environment:
+      groups:
+        # Create these groups in Codemagic > Environment variables.
+        - appstore_credentials
+        - firebase_credentials
+      vars:
+        BUNDLE_ID: "com.gohartraders.app"
+        APP_NAME: "Gohar Traders"
+        XCODE_WORKSPACE: "App.xcworkspace"
+        XCODE_SCHEME: "App"
+      node: 22
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Install web and Capacitor dependencies
+        script: |
+          npm ci
+          npm install --no-save @capacitor/core@latest @capacitor/cli@latest @capacitor/ios@latest
+
+      - name: Build the Vite web app
+        script: |
+          npm run build
+
+      - name: Generate the Capacitor iOS project
+        script: |
+          rm -rf ios
+          npx cap init "$APP_NAME" "$BUNDLE_ID" --web-dir dist
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Fetch Apple signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+
+      - name: Apply provisioning profiles
+        script: |
+          xcode-project use-profiles --project ios/App/App.xcodeproj
+
+      - name: Set app version and build number
+        script: |
+          cd ios/App
+          agvtool new-marketing-version "1.0"
+          agvtool new-version -all "$BUILD_NUMBER"
+
+      - name: Build signed IPA
+        script: |
+          cd ios/App
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      email:
+        recipients:
+          - goharhumayun@gmail.com
+        notify:
+          success: true
+          failure: true
