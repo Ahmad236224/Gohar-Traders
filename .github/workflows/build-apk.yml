@@ -27,11 +27,14 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Install Capacitor Dependencies
+        run: npm install --no-save @capacitor/core @capacitor/cli @capacitor/android
+
       - name: Build Web Assets (if applicable)
         run: npm run build --if-present
 
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: npx --no-install cap sync android
 
       - name: Build Debug APK
         run: |
