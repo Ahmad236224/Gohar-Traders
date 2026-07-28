@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { Component, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   onAuthStateChanged,
@@ -161,23 +161,84 @@ function LoginScreen() {
   );
 }
 
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error) {
+    console.error("Gohar Traders failed to render:", error);
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div style={loginStyles.loading}>
+          The app could not start. Check your internet connection, then close and reopen it.
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   const [user, setUser] = useState(undefined);
+  const [startupError, setStartupError] = useState("");
 
-  useEffect(() => onAuthStateChanged(auth, async (nextUser) => {
-    if (nextUser && nextUser.email?.toLowerCase() !== ALLOWED_EMAIL) {
-      await signOut(auth);
-      setUser(null);
-      return;
-    }
-    setUser(nextUser);
-  }), []);
+  useEffect(() => {
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (!settled) {
+        setStartupError("Could not connect to Firebase. Check your internet connection and try again.");
+        setUser(null);
+      }
+    }, 8000);
+
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      async (nextUser) => {
+        settled = true;
+        window.clearTimeout(timeout);
+        if (nextUser && nextUser.email?.toLowerCase() !== ALLOWED_EMAIL) {
+          await signOut(auth);
+          setUser(null);
+          return;
+        }
+        setUser(nextUser);
+      },
+      () => {
+        settled = true;
+        window.clearTimeout(timeout);
+        setStartupError("Firebase could not start. Check your internet connection and reopen the app.");
+        setUser(null);
+      },
+    );
+
+    return () => {
+      window.clearTimeout(timeout);
+      unsubscribe();
+    };
+  }, []);
 
   if (user === undefined) {
     return <div style={loginStyles.loading}>Checking your session…</div>;
   }
 
-  if (!user) return <LoginScreen />;
+  if (!user) {
+    return (
+      <>
+        <LoginScreen />
+        {startupError && <div role="alert" style={loginStyles.startupError}>{startupError}</div>}
+      </>
+    );
+  }
 
   return (
     <>
@@ -230,10 +291,19 @@ const loginStyles = {
     borderRadius: 8, padding: "8px 12px", background: "#fff", color: "#166534",
     fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(15,61,38,.12)",
   },
+  startupError: {
+    position: "fixed", left: "50%", bottom: 18, transform: "translateX(-50%)",
+    width: "calc(100% - 32px)", maxWidth: 500, boxSizing: "border-box",
+    padding: "11px 14px", borderRadius: 9, background: "#fff1ed", color: "#9a3412",
+    border: "1px solid #fed7cc", textAlign: "center", fontFamily: "'Segoe UI', system-ui, sans-serif",
+    fontSize: 13, boxShadow: "0 5px 18px rgba(154,52,18,.12)",
+  },
 };
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </React.StrictMode>,
 );
